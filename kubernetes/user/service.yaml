@@ -8,4 +8,5 @@ spec:
   ports:
     - port: 80
       targetPort: 3000
-  type: ClusterIP
+      nodePort: 30081  # You can change or omit this for random port
+  type: NodePort
