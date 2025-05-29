@@ -2,8 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: user-service-blue
+  labels:
+    app: user-service
+    color: blue
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: user-service
@@ -15,7 +18,7 @@ spec:
         color: blue
     spec:
       containers:
-        - name: user
-          image: shaligatv/user-service
-          ports:
-            - containerPort: 3000
+      - name: user-service
+        image: shaliga/user-service:45
+        ports:
+        - containerPort: 8080
