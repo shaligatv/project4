@@ -3,10 +3,11 @@ kind: Service
 metadata:
   name: user-service
 spec:
-  selector:
-    app: user
+  type: NodePort    # Changed from ClusterIP
   ports:
-    - port: 80
-      targetPort: 3000
-      nodePort: 30081  # You can change or omit this for random port
-  type: NodePort
+  - port: 80
+    targetPort: 8080
+    nodePort: 30081   # Optional: specify NodePort in allowed range 30000-32767
+  selector:
+    app: user-service
+    color: green     # Active color controlled by pipeline (blue or green)
