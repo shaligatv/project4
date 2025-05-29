@@ -2,8 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: product-service-green
+  labels:
+    app: product-service
+    color: green
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: product-service
@@ -15,8 +18,8 @@ spec:
         color: green
     spec:
       containers:
-        - name: product-container
-          image: shaliga/car-image:{{TAG}}  # Jenkins ൽ TAG മാറ്റം വരും
-          ports:
-            - containerPort: 3000
-                                       
+      - name: product-service
+        image: shaliga/product-service:45
+        ports:
+        - containerPort: 8080
+                                  
