@@ -15,7 +15,8 @@ spec:
         color: green
     spec:
       containers:
-        - name: product
-          image: shaligatv/product-service
+        - name: product-container
+          image: shaliga/car-image:{{TAG}}  # Jenkins ൽ TAG മാറ്റം വരും
           ports:
             - containerPort: 3000
+                                       
