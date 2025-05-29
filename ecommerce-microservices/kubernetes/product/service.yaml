@@ -3,10 +3,11 @@ kind: Service
 metadata:
   name: product-service
 spec:
-  selector:
-    app: product
+  type: NodePort    # changed from ClusterIP
   ports:
-    - port: 80
-      targetPort: 3000
-      nodePort: 30080  # optional: or remove this line to let Kubernetes assign automatically
-  type: NodePort
+  - port: 80
+    targetPort: 8080
+    nodePort: 30080   # Optional: specific node port (30000-32767)
+  selector:
+    app: product-service
+    color: green     # <-- active color (blue or green) controlled by pipeline during deployment
