@@ -1,24 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-service-green
-  labels:
-    app: user-service
-    color: green
+  name: user-green
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
-      app: user-service
-      color: green
+      app: user
+      color: green  # ✅ Ensure this matches below
   template:
     metadata:
       labels:
-        app: user-service
-        color: green
+        app: user
+        color: green  # ✅ Must match selector above
     spec:
       containers:
-      - name: user-service
-        image: shaliga/user-service:45
-        ports:
-        - containerPort: 8080
+        - name: user
+          image: shaliga/user-service:18
+          ports:
+            - containerPort: 3000
