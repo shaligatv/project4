@@ -1,24 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-service-blue
-  labels:
-    app: user-service
-    color: blue
+  name: user-blue         # consistent naming pattern with green (user-green, user-blue)
 spec:
-  replicas: 3
+  replicas: 2             # same replicas as green
   selector:
     matchLabels:
-      app: user-service
-      color: blue
+      app: user           # same app label as green
+      color: blue         # color changed only
   template:
     metadata:
       labels:
-        app: user-service
+        app: user
         color: blue
     spec:
       containers:
-      - name: user-service
+      - name: user        # same container name as green
         image: shaliga/user-service:45
         ports:
-        - containerPort: 8080
+        - containerPort: 3000   # same port as green deployment
