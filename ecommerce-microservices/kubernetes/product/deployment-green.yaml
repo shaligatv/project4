@@ -3,22 +3,22 @@ kind: Deployment
 metadata:
   name: product-green
   labels:
-    app: product-service
+    app: product       # changed from product-service to product
     color: green
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: product-service
+      app: product     # changed from product-service to product
       color: green
   template:
     metadata:
       labels:
-        app: product-service
+        app: product   # changed from product-service to product
         color: green
     spec:
       containers:
-      - name: product-service
+      - name: product   # changed container name to match labels/app name
         image: shaliga/product-service:45
         ports:
         - containerPort: 8080
