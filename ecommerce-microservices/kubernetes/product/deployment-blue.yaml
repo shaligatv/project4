@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: product-service-blue
+  name: product-blue
   labels:
-    app: product-service
+    app: product
     color: blue
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: product-service
+      app: product
       color: blue
   template:
     metadata:
       labels:
-        app: product-service
+        app: product
         color: blue
     spec:
       containers:
-      - name: product-service
-        image: shaliga/product-service:45
+      - name: product
+        image: shaliga/product-service:18
         ports:
         - containerPort: 8080
