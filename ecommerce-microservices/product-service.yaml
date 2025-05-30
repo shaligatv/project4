@@ -1,12 +1,14 @@
+# ecommerce-microservices/kubernetes/product/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: product-service
+  name: product
+  namespace: default
 spec:
   selector:
-    app: product-app
+    app: product
+    color: blue  # initial value; will be patched later to green
   ports:
     - protocol: TCP
-      port: 3000
+      port: 80
       targetPort: 3000
-  type: ClusterIP
