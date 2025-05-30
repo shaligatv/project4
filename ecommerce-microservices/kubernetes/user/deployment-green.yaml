@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-green
+  name: user-service-green
   labels:
     app: user-service
     color: green
