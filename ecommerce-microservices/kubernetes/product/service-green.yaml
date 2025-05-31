@@ -1,13 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: product-service-green
+  name: product-green-nodeport
 spec:
   selector:
     app: product
-    version: green
+    color: green
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 3000
-      
+      port: 8080
+      targetPort: 8080
+      nodePort: 31002
+  type: NodePort
