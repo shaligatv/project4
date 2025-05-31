@@ -15,11 +15,11 @@ spec:
               service:
                 name: product-service
                 port:
-                  number: 80
+                  number: 3000
           - path: /user
             pathType: Prefix
             backend:
               service:
                 name: user-service
                 port:
-                  number: 80
+                  number: 3000
