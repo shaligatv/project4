@@ -1,13 +1,11 @@
-# ecommerce-microservices/kubernetes/product/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
-  name: product
+  name: product-service
   namespace: default
 spec:
   selector:
-    app: product
-    color: blue  # initial value; will be patched later to green
+    app: product-app
   ports:
     - protocol: TCP
       port: 80
