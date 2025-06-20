@@ -1,0 +1,138 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+    }
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('docker')        // Docker Hub creds ID
+        GITHUB_CREDENTIALS = credentials('git')               // GitHub creds ID
+        NAMESPACE = 'default'
+        BLUE_COLOR = 'blue'
+        GREEN_COLOR = 'green'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        KUBECONFIG = '/var/lib/jenkins/.kube/config'             // fixed kubeconfig path
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                echo "✅ Checking out code..."
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/shaligatv/project4.git', branch: 'main'
+                    ]]
+                ])
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                echo "🔐 Logging into Docker Hub..."
+                withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
+            }
+        }
+
+        stage('Build Product Docker Image') {
+            steps {
+                echo "🐳 Building product Docker image..."
+                sh 'docker build -t shaliga/product-service:${IMAGE_TAG} ./ecommerce-microservices/docker/product'
+            }
+        }
+
+        stage('Build User Docker Image') {
+            steps {
+                echo "🐳 Building user Docker image..."
+                sh 'docker build -t shaliga/user-service:${IMAGE_TAG} ./ecommerce-microservices/docker/user'
+            }
+        }
+
+        stage('Push Images to Docker Hub') {
+            steps {
+                echo "📦 Pushing images to Docker Hub..."
+                sh '''
+                    docker push shaliga/product-service:${IMAGE_TAG}
+                    docker push shaliga/user-service:${IMAGE_TAG}
+                '''
+            }
+        }
+
+        stage('Blue-Green Deployment Product Service') {
+            steps {
+                script {
+                    def APP_NAME = "product"
+                    def liveColor = sh(
+                        script: "kubectl get svc ${APP_NAME} -n ${NAMESPACE} -o jsonpath='{.spec.selector.color}' || echo ${BLUE_COLOR}",
+                        returnStdout: true
+                    ).trim()
+                    def newColor = (liveColor == BLUE_COLOR) ? GREEN_COLOR : BLUE_COLOR
+
+                    echo "🔵 Current color for product: ${liveColor}"
+                    echo "🟢 Deploying new color: ${newColor}"
+
+                    sh "sed 's|{{TAG}}|${IMAGE_TAG}|g' ecommerce-microservices/kubernetes/${APP_NAME}/deployment-${newColor}.yaml | kubectl apply -n ${NAMESPACE} -f -"
+                    sh "kubectl apply -n ${NAMESPACE} -f ecommerce-microservices/kubernetes/${APP_NAME}/service-${newColor}.yaml"
+                    sh "kubectl rollout status deployment/${APP_NAME}-${newColor} -n ${NAMESPACE} --timeout=120s"
+                    sh "kubectl patch svc ${APP_NAME} -n ${NAMESPACE} -p '{\"spec\":{\"selector\":{\"app\":\"${APP_NAME}\",\"color\":\"${newColor}\"}}}'"
+                }
+            }
+        }
+
+        stage('Blue-Green Deployment User Service') {
+            steps {
+                script {
+                    def APP_NAME = "user"
+                    def liveColor = sh(
+                        script: "kubectl get svc ${APP_NAME} -n ${NAMESPACE} -o jsonpath='{.spec.selector.color}' || echo ${BLUE_COLOR}",
+                        returnStdout: true
+                    ).trim()
+                    def newColor = (liveColor == BLUE_COLOR) ? GREEN_COLOR : BLUE_COLOR
+
+                    echo "🔵 Current color for user: ${liveColor}"
+                    echo "🟢 Deploying new color: ${newColor}"
+
+                    sh "sed 's|{{TAG}}|${IMAGE_TAG}|g' ecommerce-microservices/kubernetes/${APP_NAME}/deployment-${newColor}.yaml | kubectl apply -n ${NAMESPACE} -f -"
+                    sh "kubectl apply -n ${NAMESPACE} -f ecommerce-microservices/kubernetes/${APP_NAME}/service-${newColor}.yaml"
+                    sh "kubectl rollout status deployment/${APP_NAME}-${newColor} -n ${NAMESPACE} --timeout=120s"
+                    sh "kubectl patch svc ${APP_NAME} -n ${NAMESPACE} -p '{\"spec\":{\"selector\":{\"app\":\"${APP_NAME}\",\"color\":\"${newColor}\"}}}'"
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    def verifyPodsReady = { appName ->
+                        def color = sh(script: "kubectl get svc ${appName} -n ${NAMESPACE} -o jsonpath='{.spec.selector.color}'", returnStdout: true).trim()
+                        def podsReady = sh(script: "kubectl get pods -n ${NAMESPACE} -l app=${appName},color=${color} -o jsonpath='{.items[*].status.conditions[?(@.type==\"Ready\")].status}'", returnStdout: true).trim()
+                        echo "🧪 ${appName.capitalize()} service is pointing to color: ${color}"
+                        if (!podsReady.contains('True')) {
+                            error "❌ Some ${appName} pods are not ready for color ${color}"
+                        }
+                    }
+
+                    verifyPodsReady("product")
+                    verifyPodsReady("user")
+
+                    echo "✅ All pods are healthy and ready."
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "❌ Deployment Failed!"
+        }
+        success {
+            echo "✅ Deployment Successful!"
+        }
+    }
+}
